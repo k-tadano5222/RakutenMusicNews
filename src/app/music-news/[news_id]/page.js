@@ -21,6 +21,8 @@ import { Container } from "@mui/material"; // MUI の Container コンポーネ�
 import Chip from "@mui/material/Chip"; // MUI の Chip コンポーネントをインポート
 import LinearProgress from "@mui/material/LinearProgress"; // MUI の LinearProgress コンポーネントをインポート (プログレスバー)
 const LOGO_IMAGE_URL = "/images/logo_cdj.png";
+import Header from "../../components/Header";
+import Image from "next/image";
 
 export default function MusicNewsDetail({ params }) {
   // MusicNewsDetail コンポーネント (音楽ニュース詳細ページ)
@@ -119,7 +121,7 @@ export default function MusicNewsDetail({ params }) {
       <Container
         sx={{
           // Container コンポーネントのスタイル
-          position: "fixed",
+          position: "relative",
           top: 0,
           left: 0,
           width: "100%",
@@ -127,11 +129,12 @@ export default function MusicNewsDetail({ params }) {
           zIndex: 1000,
           justifyContent: "flex-start",
           alignItems: "center",
-          padding: "12px",
+          padding: "4px 12px",
           background: "#ffffff",
         }}
       >
-        <Stack direction={"row"} spacing={3} sx={{ width: "100%" }}>
+        <Header />
+        <Stack direction={"row"} spacing={1} sx={{ width: "100%" }}>
           {" "}
           {/* Stack に width: 100% を追加 */}
           {/* Stack に width: 100% を追加 */}
@@ -143,12 +146,12 @@ export default function MusicNewsDetail({ params }) {
             sx={{
               // Typography コンポーネントのスタイル
               display: "block",
-              fontSize: "16px",
+              fontSize: "14px",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
-              // display: "flex",  flexbox は不要なので削除
-              // alignItems: "center",  flexbox を削除したので不要
+              display: "flex",
+              alignItems: "center",
               width: "100%", // Typography に width を追加
             }}
           >
@@ -156,13 +159,28 @@ export default function MusicNewsDetail({ params }) {
           </Typography>
         </Stack>
       </Container>
-
+      <div
+        style={{
+          width: "100%", // 親要素の幅を100%に
+          height: `10px`, // 親要素の高さを固定
+          position: "relative", // layout="fill" (または fill={true}) には必須
+          overflow: "hidden", // 画像が親要素からはみ出るのを防ぐ
+          // border: '1px solid green', // 動作確認用の枠線
+        }}
+      >
+        <Image
+          src="/images/gradation-bar.png" // publicフォルダ内の画像パス
+          alt="高さ固定、幅100%の画像"
+          layout="fill" // 親要素いっぱいに広がる
+          style={{ objectFit: "fill" }} // fill={true} の場合は style オブジェクト内で指定
+          priority={true}
+        />
+      </div>
       <Container
         sx={{
           // Container コンポーネントのスタイル
-          backgroundColor: "#EDEDED", // 背景色をlightblueに設定
+          backgroundColor: "#f8f8f8", // 背景色をlightblueに設定
           padding: "12px",
-          marginTop: "60px",
         }}
       >
         <Card

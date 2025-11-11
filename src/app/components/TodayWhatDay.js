@@ -16,6 +16,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 /* MUI ICON */
 import ArticleIcon from "@mui/icons-material/Article";
 /* Mui */
+
+import Image from "next/image";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress"; // ローディング表示用に追加
@@ -108,12 +110,32 @@ const TodayWhatDay = ({ accessToken }) => {
   return (
     // JSX: UIを記述
     <div>
-      <Container
-        maxWidth={false}
-        sx={{
-          paddingTop: "24px",
+      {/* グラデーションの帯 */}
+      <div
+        style={{
+          width: "100%", // 親要素の幅を100%に
+          height: `10px`, // 親要素の高さを固定
+          position: "relative", // layout="fill" (または fill={true}) には必須
+          overflow: "hidden", // 画像が親要素からはみ出るのを防ぐ
+          // border: '1px solid green', // 動作確認用の枠線
         }}
       >
+        <Image
+          src="/images/gradation-bar.png" // publicフォルダ内の画像パス
+          alt="高さ固定、幅100%の画像"
+          layout="fill" // 親要素いっぱいに広がる
+          // fill={true}             // Next.js 13以降はこちら
+          // widthとheightは指定しない（親要素のサイズを使うため）
+
+          // 画像が親要素の領域にどのように収まるかを制御
+          // objectFit="cover"   // 親要素を覆うように拡大・縮小し、はみ出しは切り取る (推奨)
+          // objectFit="contain" // 親要素内に収まるように拡大・縮小し、余白ができる
+          // objectFit="fill"    // 親要素のサイズに合わせて画像を歪ませて表示
+          style={{ objectFit: "fill" }} // fill={true} の場合は style オブジェクト内で指定
+          priority={true}
+        />
+      </div>
+      <Container maxWidth={false}>
         <Box
           sx={{
             height: "auto", // 必要に応じて調整 (これはビューポートの高さ)
@@ -133,37 +155,57 @@ const TodayWhatDay = ({ accessToken }) => {
               gap: "12px",
             }}
           >
-            <Stack direction="row" spacing={1} sx={{ paddingLeft: "12px!important" }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                paddingLeft: "12px!important",
+              }}
+            >
               <TitleImage />
-              <Stack direction="column" spacing={2}>
+              <Stack direction="column" spacing={2} sx={{}}>
                 <Typography noWrap sx={{ fontSize: "12px" }}>
                   What day is it today?
                 </Typography>
-                <Typography noWrap sx={{ marginTop: "0!important", fontSize: "20px", fontWeight: "900" }}>
+                <hr style={{ marginTop: "0px" }} />
+                <Typography noWrap sx={{ marginTop: "0!important", fontSize: "24px", fontWeight: "900" }}>
                   今日は何の日
                 </Typography>
               </Stack>
             </Stack>
-            <Stack
-              direction="column"
-              justifyContent="center"
-              alignItems="center"
-              px={2}
-              py={0.1}
-              sx={{
-                border: "1px solid #e7e7e7", // ボーダー: 幅1px, 実線, プライマリカラー
-                borderRadius: "8px", // 角丸: 8px
-                bgcolor: "white", // 背景色 (ボーダーと区別しやすくするため)
-                mb: 3,
-              }}
-            >
-              <Typography noWrap sx={{ fontSize: "14px", textAlign: "center", fontWeight: "900" }}>
-                今日は
-              </Typography>
-              <Typography noWrap sx={{ color: "#bf0000", marginTop: "0!important", fontSize: "24px", fontWeight: "900", textAlign: "center", lineHeight: "100%" }}>
-                {todayFormatted}
-              </Typography>
-            </Stack>
+            <Box sx={{ p: 2 }}>
+              <Stack
+                spacing={2} // Stackのアイテム間のスペース
+                direction="column" // アイテムの配置方向
+                sx={{
+                  // 背景画像の設定
+                  backgroundImage: "url(/images/bg_today.png)", // 画像のパスを指定
+                  backgroundSize: "contain", // 背景画像を要素全体に広げる
+                  backgroundPosition: "center", // 画像を中央に配置
+                  backgroundRepeat: "no-repeat", // 画像を繰り返さない
+
+                  // Stack自体のサイズ設定 (これがないと画像が見えない場合があります)
+                  width: "100px",
+                  height: 65, // 高さを指定しないと、中身の高さにしかならない
+                  // minHeight: 300, // 最小高さを設定することも可能
+
+                  // テキストなど中身のスタイル調整 (必要に応じて)
+                  color: "black", // 背景画像の上に表示されるテキストの色
+
+                  display: "flex", // Stackはデフォルトでflexですが、明示的に
+                  justifyContent: "center", // 垂直方向中央寄せ
+                  alignItems: "center", // 水平方向中央寄せ
+                  textAlign: "center",
+                }}
+              >
+                <Typography noWrap sx={{ fontSize: "16px", textAlign: "center", fontWeight: "900" }}>
+                  今日は
+                </Typography>
+                <Typography noWrap sx={{ color: "#bf0000", marginTop: "0!important", fontSize: "24px", fontWeight: "900", textAlign: "center", lineHeight: "100%" }}>
+                  {todayFormatted}
+                </Typography>
+              </Stack>
+            </Box>
           </Stack>
         </Box>
 
@@ -187,7 +229,6 @@ const TodayWhatDay = ({ accessToken }) => {
         )}
         <Paper
           variant="outlined"
-          elevation={3}
           sx={{
             borderRadius: 2,
             overflow: "hidden",
@@ -198,7 +239,7 @@ const TodayWhatDay = ({ accessToken }) => {
             <div>
               <Box
                 sx={{
-                  backgroundColor: "#EDEDED", // 背景色をlightblueに設定
+                  backgroundColor: "#f8f8f8", // 背景色をlightblueに設定
                   padding: "12px",
                 }}
               >

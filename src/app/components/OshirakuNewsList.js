@@ -24,6 +24,7 @@ import {
   Divider,
   Button, // 「もっと見る」ボタン用に Button を追加
 } from "@mui/material";
+import Image from "next/image";
 
 /* MUI ICON */
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
@@ -94,55 +95,87 @@ export default function OshirakuNewsList() {
           paddingTop: "24px",
         }}
       >
-        <Box
+        <Container
           sx={{
-            height: "auto",
-            width: "100%",
-            color: "#000000",
-            marginTop: "12px",
-            padding: "0px,12px",
+            backgroundColor: "#ffffff",
+            padding: "0",
+            boxShadow: "2px 2px 0 0 #000",
           }}
         >
-          <Stack direction="row" spacing={1} sx={{ paddingLeft: "12px!important" }}>
-            <TitleImage />
-            <Stack direction="column" spacing={2}>
-              <Typography noWrap sx={{ fontSize: "12px" }}>
-                Interview / Column
-              </Typography>
-              <Typography noWrap sx={{ marginTop: "0!important", fontSize: "20px", fontWeight: "900" }}>
-                インタビュー・コラム
-              </Typography>
+          {/* グラデーションの帯 */}
+          <div
+            style={{
+              width: "100%", // 親要素の幅を100%に
+              height: `10px`, // 親要素の高さを固定
+              position: "relative", // layout="fill" (または fill={true}) には必須
+              overflow: "hidden", // 画像が親要素からはみ出るのを防ぐ
+              // border: '1px solid green', // 動作確認用の枠線
+            }}
+          >
+            <Image
+              src="/images/gradation-bar.png" // publicフォルダ内の画像パス
+              alt="高さ固定、幅100%の画像"
+              layout="fill" // 親要素いっぱいに広がる
+              style={{ objectFit: "fill" }} // fill={true} の場合は style オブジェクト内で指定
+              priority={true}
+            />
+          </div>
+          <Box
+            sx={{
+              height: "auto",
+              width: "100%",
+              color: "#000000",
+              marginTop: "12px",
+              padding: "0px,12px",
+            }}
+          >
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <Stack direction="row" spacing={1} sx={{ paddingLeft: "12px" }}>
+                <TitleImage />
+                <Stack direction="column" spacing={2}>
+                  <Typography noWrap sx={{ fontSize: "12px" }}>
+                    Column /Pick up
+                  </Typography>
+                  <hr style={{ marginTop: "0px" }} />
+                  <Typography noWrap sx={{ marginTop: "0!important", fontSize: "24px", fontWeight: "900" }}>
+                    コラム/特集記事
+                  </Typography>
+                </Stack>
+              </Stack>
+              <Box sx={{ paddingRight: "12px" }}>
+                <Image src="/images/img_onpu.png" width={50} height={54} quality={100} alt="logo" />
+              </Box>
             </Stack>
-          </Stack>
-        </Box>
-
-        {/* 説明文 */}
-        <Typography py={1} sx={{ fontSize: "14px", textAlign: "center" }}>
-          エンタメ関連のインタビュー記事をご紹介
-        </Typography>
-
-        {/* APIからエラーが返され、かつ記事が一部でも表示されている場合（例えば推し楽はOKだが静的記事がエラーの場合） */}
-        {error && articles.length > 0 && (
-          <Box sx={{ p: 2, color: "warning.main", backgroundColor: "#fff3e0", borderLeft: "4px solid #ff9800", mb: 2 }}>
-            <Typography variant="body2">{error}</Typography>
           </Box>
-        )}
 
-        {articles.length === 0 && !loading && !error && (
-          <Box sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>
-            <Typography>表示できるニュースがありません。</Typography>
-          </Box>
-        )}
+          {/* 説明文 */}
+          <Typography py={1} sx={{ fontSize: "14px", textAlign: "center" }}>
+            エンタメ関連のインタビュー記事をご紹介
+          </Typography>
 
-        {/* リスト表示部分 */}
-        <Paper
-          variant="outlined"
-          elevation={3}
-          sx={{
-            borderRadius: 2,
-            overflow: "hidden",
-          }}
-        >
+          {/* APIからエラーが返され、かつ記事が一部でも表示されている場合（例えば推し楽はOKだが静的記事がエラーの場合） */}
+          {error && articles.length > 0 && (
+            <Box sx={{ p: 2, color: "warning.main", backgroundColor: "#fff3e0", borderLeft: "4px solid #ff9800", mb: 2 }}>
+              <Typography variant="body2">{error}</Typography>
+            </Box>
+          )}
+
+          {articles.length === 0 && !loading && !error && (
+            <Box sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>
+              <Typography>表示できるニュースがありません。</Typography>
+            </Box>
+          )}
+
+          {/* リスト表示部分 */}
+
           <List
             sx={{
               padding: "0",
@@ -171,7 +204,7 @@ export default function OshirakuNewsList() {
                       flexDirection: "row",
                       justifyContent: "space-between",
                       width: "100%",
-                      padding: "8px",
+                      padding: "0px 4px",
                     }}
                   >
                     {/* サムネイル画像部分 */}
@@ -279,24 +312,25 @@ export default function OshirakuNewsList() {
               </React.Fragment>
             ))}
           </List>
-        </Paper>
 
-        {/* 「もっと見る」ボタン */}
-        {totalCount > DISPLAY_LIMIT && (
-          <Stack
-            direction="row"
-            sx={{
-              justifyContent: "center",
-              alignItems: "center",
-              marginBottom: "12px",
-              marginTop: "12px", // ボタンとリストの間に少しスペースを追加
-            }}
-          >
-            <Button variant="outlined" color="error" component={Link} sx={{ width: "100%", backgroundColor: "#ffffff" }} href="/interview-column/all?resetPage=true">
-              インタビュー・コラムをもっと見る＞
-            </Button>
-          </Stack>
-        )}
+          {/* 「もっと見る」ボタン */}
+          {totalCount > DISPLAY_LIMIT && (
+            <Stack
+              direction="row"
+              sx={{
+                justifyContent: "center",
+                alignItems: "center",
+                paddingBottom: "12px",
+                paddingTop: "12px",
+                px: "1rem",
+              }}
+            >
+              <Button variant="outlined" color="error" component={Link} sx={{ width: "100%", backgroundColor: "#ffffff" }} href="/interview-column/all?resetPage=true">
+                インタビュー・コラムをもっと見る＞
+              </Button>
+            </Stack>
+          )}
+        </Container>
       </Container>
     </div>
   );

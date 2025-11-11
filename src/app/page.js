@@ -1,85 +1,30 @@
 // app/page.js
-
 "use client";
 
 import "./globals.css";
 
 import { useState, useEffect } from "react";
-import { Element, Link as ScrollLink } from "react-scroll"; // react-scroll をインポート
 
+// react-scroll の Element はセクションの区切りとして残す
+import { Element } from "react-scroll";
+
+// 作成したHeaderコンポーネントをインポート
+import Header from "./components/Header";
 import TodayWhatDay from "./components/TodayWhatDay";
-import ReadMusicNews from "./components/MusicNews"; // MusicNews.js を ReadMusicNews としてインポート
-// import dynamic from "next/dynamic"; // 現在のコードでは使用されていないためコメントアウト
+import ReadMusicNews from "./components/MusicNews";
 import OshirakuNewsList from "./components/OshirakuNewsList";
-
-/* Mui */
-import Box from "@mui/material/Box";
-// import Card from "@mui/material/Card"; // 現在のコードでは使用されていないためコメントアウト
-// import CardActions from "@mui/material/CardActions"; // 現在のコードでは使用されていないためコメントアウト
-// import CardContent from "@mui/material/CardContent"; // 現在のコードでは使用されていないためコメントアウト
 import Typography from "@mui/material/Typography";
-import Stack from "@mui/material/Stack";
-import PropTypes from "prop-types";
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
-import * as React from "react";
+/* Mui */
+// Headerコンポーネントに移動したMUIコンポーネントのインポートは不要になる
+// import Box from "@mui/material/Box";
+// import Typography from "@mui/material/Typography";
+
 import { Container } from "@mui/material";
-
-/* ↓タブ切り替えの処理（ここから）↓ */
-function samePageLinkNavigation(event) {
-  if (
-    event.defaultPrevented ||
-    event.button !== 0 || // ignore everything but left-click
-    event.metaKey ||
-    event.ctrlKey ||
-    event.altKey ||
-    event.shiftKey
-  ) {
-    return false;
-  }
-  return true;
-}
-
-function LinkTab(props) {
-  return (
-    <Tab
-      component={ScrollLink} // a タグの代わりに ScrollLink を使用
-      to={props.href} // href の代わりに to を使用
-      spy={true}
-      smooth={true}
-      duration={500}
-      offset={-50} // ヘッダーの高さ分オフセット
-      onClick={(event) => {
-        // Routing libraries handle this, you can remove the onClick handle when using them.
-        if (samePageLinkNavigation(event)) {
-          event.preventDefault();
-        }
-      }}
-      aria-current={props.selected && "page"}
-      {...props}
-    />
-  );
-}
-
-LinkTab.propTypes = {
-  selected: PropTypes.bool,
-};
-/* ↓タブ切り替えの処理（ここまで）↓ */
 
 export default function Home() {
   const [token, setToken] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false); // ローディング状態追加
-
-  /* ↓タブ切り替え関数↓ */
-  const [value, setValue] = React.useState(0);
-  const handleChange = (event, newValue) => {
-    // event.type can be equal to focus with selectionFollowsFocus.
-    if (event.type !== "click" || (event.type === "click" && samePageLinkNavigation(event))) {
-      setValue(newValue);
-    }
-  };
-  /* スクロールに連動してアクティブなタブを切り替え */
 
   useEffect(() => {
     authenticate();
@@ -95,23 +40,21 @@ export default function Home() {
       const response = await fetch("/api/auth");
       if (!response.ok) {
         const errorData = await response.json();
-        // 認証失敗の場合でも、エラーメッセージを設定し、トークンはnullのままにする
         setError(`認証に失敗しました (HTTP ${response.status}): ${errorData.message || "詳細不明"}`);
-        setToken(null); // トークンは取得できていないのでnullのまま
+        setToken(null);
       } else {
         const data = await response.json();
         if (data.token && data.expires_at) {
           setToken(data.token);
-          setError(null); // 成功したらエラーをクリア
+          setError(null);
         } else {
           setError("認証に失敗しました: 不正なレスポンスデータ (トークンまたは有効期限がありません)");
           setToken(null);
         }
       }
     } catch (e) {
-      // ネットワークエラーなど
       setError(`認証中に予期せぬエラーが発生しました: ${e.message}`);
-      setToken(null); // トークンは取得できていないのでnullのまま
+      setToken(null);
     } finally {
       setLoading(false);
     }
@@ -206,82 +149,12 @@ export default function Home() {
       {!loading && ( // ローディング中はコンテンツを表示しない
         <div>
           <Container maxWidth={false} disableGutters sx={{ backgroundColor: "#f8f8f8" }}>
-            <Box
-              sx={{
-                position: "fixed", // ビューポートに対して固定
-                top: 0, // 上端に配置
-                left: 0, // 左端に配置
-                width: "100%", // 幅を100%に設定
-                backgroundColor: "white", // 背景色を設定
-                zIndex: 1000, // 他の要素よりも上に表示
-                height: "50px",
-              }}
-            >
-              <Tabs
-                value={value}
-                onChange={handleChange}
-                aria-label="nav tabs example"
-                role="navigation"
-                variant="fullWidth"
-                sx={{
-                  backgroundColor: "#fff",
-                  "& .MuiTab-root": {
-                    color: "#999", // 非アクティブ時
-                    flex: 1,
-                  },
-                  "& .Mui-selected": {
-                    color: "#d32f2f!important", // アクティブ時の文字色
-                  },
-                  "& .MuiTabs-indicator": {
-                    backgroundColor: "#d32f2f", // インジケーター色（下線）
-                  },
-                }}
-              >
-                <LinkTab
-                  label="今日は何の日？"
-                  href="todayWhatDaySection"
-                  sx={{
-                    fontSize: "11px",
-                    fontWeight: "900",
-                    width: "100%", // 横幅いっぱい
-                    display: "flex", // 子要素をflex配置
-                    justifyContent: "center", // 中央揃え
-                    alignItems: "center", // 垂直中央揃え（必要に応じて）
-                    textTransform: "none", // 大文字化を無効に（任意）
-                  }}
-                />
-                <LinkTab
-                  label="最新音楽ニュース"
-                  href="musicNewsSection"
-                  sx={{
-                    fontSize: "11px",
-                    fontWeight: "900",
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    textTransform: "none",
-                  }}
-                />
-                <LinkTab
-                  label="インタビュー"
-                  href="interviewSection"
-                  sx={{
-                    fontSize: "11px",
-                    fontWeight: "900",
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    textTransform: "none",
-                  }}
-                />
-              </Tabs>
-            </Box>
+            {/* Headerコンポーネントを配置 */}
+            <Header />
 
             {/* 各コンポーネントを Element で囲む */}
             {/* accessToken を渡すことで、子コンポーネントが認証状態を判断できるようにする */}
-            <Element name="todayWhatDaySection" style={{ marginTop: "50px", width: "100%" }} sx={{ backgroundColor: "#f8f8f8" }}>
+            <Element name="todayWhatDaySection" style={{ width: "100%" }} sx={{ backgroundColor: "#f8f8f8" }}>
               <TodayWhatDay accessToken={token} />
             </Element>
 
@@ -292,6 +165,11 @@ export default function Home() {
             {/* OshirakuNewsList は認証不要なので常に表示 */}
             <Element name="interviewSection" style={{ width: "100%" }}>
               <OshirakuNewsList />
+            </Element>
+            <Element name="interviewSection" style={{ padding: "24px" }}>
+              <Typography noWrap sx={{ fontSize: "16px", textAlign: "center" }}>
+                © Rakuten Group, Inc.
+              </Typography>
             </Element>
           </Container>
         </div>

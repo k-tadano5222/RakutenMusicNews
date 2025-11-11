@@ -25,8 +25,10 @@ import ListItemText from "@mui/material/ListItemText";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemButton from "@mui/material/ListItemButton";
 import Divider from "@mui/material/Divider";
+import Image from "next/image";
 
 import MyImage from "./MyImage"; // MyImageコンポーネントをインポート
+import { Margin } from "@mui/icons-material";
 
 export default function MusicNews({ accessToken }) {
   const [musicNews, setMusicNews] = useState([]);
@@ -98,58 +100,80 @@ export default function MusicNews({ accessToken }) {
           paddingTop: "24px",
         }}
       >
-        {/* タイトル帯部分*/}
-        <Box
+        <Container
           sx={{
-            height: "auto", // 必要に応じて調整 (これはビューポートの高さ)
-            width: "100%", // 必要に応じて調整
-            color: "#000000",
-            marginTop: "12px",
-            padding: "0px,12px",
+            backgroundColor: "#ffffff",
+            padding: "0",
+            boxShadow: "2px 2px 0 0 #000",
           }}
         >
-          {/* タイトル部分 */}
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={1}
-            sx={{
-              padding: "0px,12px",
-              gap: "12px",
+          {/* グラデーションの帯 */}
+          <div
+            style={{
+              width: "100%", // 親要素の幅を100%に
+              height: `10px`, // 親要素の高さを固定
+              position: "relative", // layout="fill" (または fill={true}) には必須
+              overflow: "hidden", // 画像が親要素からはみ出るのを防ぐ
+              // border: '1px solid green', // 動作確認用の枠線
             }}
           >
-            <Stack direction="row" spacing={1} sx={{ paddingLeft: "12px!important" }}>
-              <TitleImage />
-              <Stack direction="column" spacing={2}>
-                <Typography noWrap sx={{ fontSize: "12px" }}>
-                  Latest Music News
-                </Typography>
-                <Typography noWrap sx={{ marginTop: "0!important", fontSize: "20px", fontWeight: "900" }}>
-                  最新音楽ニュース
-                </Typography>
+            <Image
+              src="/images/gradation-bar.png" // publicフォルダ内の画像パス
+              alt="高さ固定、幅100%の画像"
+              layout="fill" // 親要素いっぱいに広がる
+              style={{ objectFit: "fill" }} // fill={true} の場合は style オブジェクト内で指定
+              priority={true}
+            />
+          </div>
+          {/* タイトル帯部分*/}
+          <Box
+            sx={{
+              height: "auto", // 必要に応じて調整 (これはビューポートの高さ)
+              width: "100%", // 必要に応じて調整
+              color: "#000000",
+              backgroundColor: "#ffffff",
+              marginTop: "12px",
+              padding: "0px,12px",
+            }}
+          >
+            {/* タイトル部分 */}
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <Stack direction="row" spacing={1} sx={{ paddingLeft: "12px" }}>
+                <TitleImage />
+                <Stack direction="column" spacing={2}>
+                  <Typography noWrap sx={{ fontSize: "12px" }}>
+                    Latest Music News
+                  </Typography>
+                  <hr style={{ marginTop: "0px" }} />
+                  <Typography noWrap sx={{ marginTop: "0!important", fontSize: "24px", fontWeight: "900" }}>
+                    最新音楽ニュース
+                  </Typography>
+                </Stack>
               </Stack>
+              <Box sx={{ paddingRight: "12px" }}>
+                <Image src="/images/img_onpu.png" width={50} height={54} quality={100} alt="logo" />
+              </Box>
             </Stack>
-          </Stack>
-        </Box>
-        {/* 説明文 */}
-        <Typography py={1} sx={{ fontSize: "14px", textAlign: "center" }}>
-          音楽関連の最新ニュースをお届けします
-        </Typography>
-        {/* エラーメッセージを警告として表示 */}
-        {error && (
-          <Box sx={{ p: 1, mb: 2, backgroundColor: "#fff3e0", borderLeft: "4px solid #ff9800", color: "#ff9800" }}>
-            <Typography variant="body2">{error}</Typography>
           </Box>
-        )}
+          {/* 説明文 */}
+          <Typography py={1} sx={{ fontSize: "14px", textAlign: "center" }}>
+            音楽関連の最新ニュースをお届けします
+          </Typography>
+          {/* エラーメッセージを警告として表示 */}
+          {error && (
+            <Box sx={{ p: 1, mb: 2, backgroundColor: "#fff3e0", borderLeft: "4px solid #ff9800", color: "#ff9800" }}>
+              <Typography variant="body2">{error}</Typography>
+            </Box>
+          )}
 
-        <Paper
-          variant="outlined"
-          elevation={3}
-          sx={{
-            borderRadius: 2,
-            overflow: "hidden",
-          }}
-        >
           {musicNews.length > 0 ? (
             <List>
               {musicNews.map((news) => (
@@ -158,7 +182,7 @@ export default function MusicNews({ accessToken }) {
                     alignItems="flex-start"
                     sx={{
                       backgroundColor: "#ffffff",
-                      padding: "0",
+                      padding: "4px",
                     }}
                   >
                     <ListItemButton
@@ -243,26 +267,26 @@ export default function MusicNews({ accessToken }) {
           ) : (
             <Typography sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>{error ? "ニュースの読み込み中にエラーが発生しました。" : "表示できるデータが見つかりませんでした。"}</Typography>
           )}
-        </Paper>
 
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: "center",
-            alignItems: "center",
-
-            marginBottom: "12px",
-            marginTop: "12px",
-          }}
-        >
-          {musicNews.length > 0 ? (
-            <Button variant="outlined" color="error" component={Link} sx={{ width: "100%", backgroundColor: "#ffffff" }} href="/music-news/all">
-              最新ニュースをもっと見る＞
-            </Button>
-          ) : (
-            <></>
-          )}
-        </Stack>
+          <Stack
+            direction="row"
+            sx={{
+              justifyContent: "center",
+              alignItems: "center",
+              paddingBottom: "12px",
+              paddingTop: "12px",
+              px: "1rem",
+            }}
+          >
+            {musicNews.length > 0 ? (
+              <Button variant="outlined" color="error" component={Link} sx={{ width: "100%", backgroundColor: "#ffffff" }} href="/music-news/all">
+                最新ニュースをもっと見る＞
+              </Button>
+            ) : (
+              <></>
+            )}
+          </Stack>
+        </Container>
       </Container>
     </div>
   );

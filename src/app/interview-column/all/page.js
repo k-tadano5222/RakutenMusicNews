@@ -10,6 +10,8 @@ import React, { useState, useEffect, Suspense } from "react"; // Suspense もイ
 
 // Next.jsのナビゲーション関連フックをインポート
 import { useRouter } from "next/navigation";
+import Header from "../../components/Header";
+import Image from "next/image";
 
 // Material-UIのアイコンとコンポーネントをインポート
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew"; // 戻るボタンのアイコン
@@ -68,9 +70,10 @@ const AllInterviewColumnPage = () => {
   return (
     <div>
       {/* 固定ヘッダー部分 */}
+      <Header />
       <Container
         sx={{
-          position: "fixed", // 画面上部に固定
+          position: "relative", // 画面上部に固定
           top: 0, // 上端に配置
           left: 0, // 左端に配置
           width: "100%", // 幅を100%に設定
@@ -78,11 +81,11 @@ const AllInterviewColumnPage = () => {
           zIndex: 1000, // 他の要素より手前に表示
           justifyContent: "flex-start", // アイテムを左寄せに配置
           alignItems: "center", // アイテムを中央揃えに配置
-          padding: "12px", // 内側の余白
+          padding: "4px 12px",
           background: "#ffffff", // 背景色 (backgroundColor と重複しているが念のため)
         }}
       >
-        <Stack direction={"row"} spacing={3}>
+        <Stack direction={"row"} spacing={2}>
           {/* 戻るボタン */}
           <IconButton color="#666666" aria-label="Back" onClick={() => router.back()}>
             <ArrowBackIosNewIcon />
@@ -91,7 +94,7 @@ const AllInterviewColumnPage = () => {
           <Typography
             sx={{
               display: "block",
-              fontSize: "16px",
+              fontSize: "14px",
               whiteSpace: "nowrap", // テキストを折り返さない
               overflow: "hidden", // はみ出したテキストを隠す
               textOverflow: "ellipsis", // はみ出したテキストを三点リーダーで表示
@@ -103,13 +106,29 @@ const AllInterviewColumnPage = () => {
           </Typography>
         </Stack>
       </Container>
-
+      {/* グラデーションの帯 */}
+      <div
+        style={{
+          width: "100%", // 親要素の幅を100%に
+          height: `10px`, // 親要素の高さを固定
+          position: "relative", // layout="fill" (または fill={true}) には必須
+          overflow: "hidden", // 画像が親要素からはみ出るのを防ぐ
+          // border: '1px solid green', // 動作確認用の枠線
+        }}
+      >
+        <Image
+          src="/images/gradation-bar.png" // publicフォルダ内の画像パス
+          alt="高さ固定、幅100%の画像"
+          layout="fill" // 親要素いっぱいに広がる
+          style={{ objectFit: "fill" }} // fill={true} の場合は style オブジェクト内で指定
+          priority={true}
+        />
+      </div>
       {/* メインコンテンツ部分 */}
       <Container
         sx={{
           backgroundColor: "#f8f8f8", // 背景色
           padding: "12px", // 内側の余白
-          marginTop: "60px", // 固定ヘッダーの高さ分、コンテンツを下にずらす
         }}
       >
         {/*
@@ -178,6 +197,11 @@ const AllInterviewColumnPage = () => {
             }}
           />
         )}
+        <Stack style={{ padding: "24px" }}>
+          <Typography noWrap sx={{ fontSize: "16px", textAlign: "center" }}>
+            © Rakuten Group, Inc.
+          </Typography>
+        </Stack>
       </Container>
     </div>
   );

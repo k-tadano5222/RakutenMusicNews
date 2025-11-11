@@ -5,9 +5,9 @@ function TitleImage() {
   return (
     <Box>
       <img
-        src="images/img_title.png" // 画像のパス
+        src="images/gradation-title.png" // 画像のパス
         alt="タイトル画像"
-        style={{ width: "40px", height: "auto" }} // スタイリング
+        style={{ width: "9px", height: "auto" }} // スタイリング
       />
     </Box>
   );

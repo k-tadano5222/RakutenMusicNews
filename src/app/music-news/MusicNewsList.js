@@ -15,6 +15,7 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos"; // MUI �
 import Typography from "@mui/material/Typography"; // MUI の Typography コンポーネントをインポート
 import MyImage from "../components/MyImage"; // MyImage コンポーネントをインポート
 import LinearProgress from "@mui/material/LinearProgress"; // MUI の LinearProgress コンポーネントをインポート (プログレスバー)
+import Container from "@mui/material";
 
 const MusicNewsList = ({ offset, limit }) => {
   const [musicNews, setMusicNews] = useState([]); // 音楽ニュースのデータを保持する state
@@ -73,7 +74,26 @@ const MusicNewsList = ({ offset, limit }) => {
   }, [offset, limit]); // 依存配列に offset と limit を指定
 
   if (loading) {
-    return <LinearProgress sx={{ mt: 2 }} />; // ローディング状態の場合、LinearProgress コンポーネントを表示 (プログレスバー)
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center", // 水平方向の中央揃え
+          alignItems: "center", // 垂直方向の中央揃え
+          minHeight: "100vh", // ビューポートの高さ全体を使う
+          width: "100vw", // ビューポートの幅全体を使う
+          // background: '#f0f0f0', // デバッグ用に背景色を追加
+        }}
+      >
+        <Box sx={{ width: "50%", mt: 2 }}>
+          {" "}
+          {/* LinearProgressの幅を調整 */}
+          <LinearProgress />
+        </Box>
+      </Box>
+
+      // ローディング状態の場合、LinearProgress コンポーネントを表示 (プログレスバー)
+    );
   }
 
   return (
