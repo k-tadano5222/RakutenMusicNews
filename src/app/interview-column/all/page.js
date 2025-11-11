@@ -83,6 +83,8 @@ const AllInterviewColumnPage = () => {
           alignItems: "center", // アイテムを中央揃えに配置
           padding: "4px 12px",
           background: "#ffffff", // 背景色 (backgroundColor と重複しているが念のため)
+          borderTop: 1,
+          borderColor: "grey.400",
         }}
       >
         <Stack direction={"row"} spacing={2}>

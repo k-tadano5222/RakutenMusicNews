@@ -18,6 +18,7 @@ import Typography from "@mui/material/Typography";
 // Headerコンポーネントに移動したMUIコンポーネントのインポートは不要になる
 // import Box from "@mui/material/Box";
 // import Typography from "@mui/material/Typography";
+import theme from "./theme"; 
 
 import { Container } from "@mui/material";
 

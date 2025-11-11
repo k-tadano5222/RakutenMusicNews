@@ -108,7 +108,26 @@ export default function MusicNewsDetail({ params }) {
 
   if (!newsItem) {
     // ニュース記事のデータがまだ取得できていない場合 (ローディング中)
-    return <LinearProgress />; // LinearProgress コンポーネントを表示 (プログレスバー)
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center", // 水平方向の中央揃え
+          alignItems: "center", // 垂直方向の中央揃え
+          minHeight: "100vh", // ビューポートの高さ全体を使う
+          width: "100vw", // ビューポートの幅全体を使う
+          // background: '#f0f0f0', // デバッグ用に背景色を追加
+        }}
+      >
+        <Box sx={{ width: "50%", mt: 2 }}>
+          {" "}
+          {/* LinearProgressの幅を調整 */}
+          <LinearProgress />
+        </Box>
+      </Box>
+
+      // ローディング状態の場合、LinearProgress コンポーネントを表示 (プログレスバー)
+    );
   }
 
   // artist_name と artist_id を取得
@@ -118,6 +137,7 @@ export default function MusicNewsDetail({ params }) {
   /* 画面表示部分 */
   return (
     <div>
+      <Header />
       <Container
         sx={{
           // Container コンポーネントのスタイル
@@ -131,9 +151,10 @@ export default function MusicNewsDetail({ params }) {
           alignItems: "center",
           padding: "4px 12px",
           background: "#ffffff",
+          borderTop: 1,
+          borderColor: "grey.400",
         }}
       >
-        <Header />
         <Stack direction={"row"} spacing={1} sx={{ width: "100%" }}>
           {" "}
           {/* Stack に width: 100% を追加 */}

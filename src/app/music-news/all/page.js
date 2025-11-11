@@ -40,11 +40,12 @@ const AllMusicNewsPage = () => {
           top: 0,
           left: 0,
           width: "100%",
-
+          borderTop: 1,
+          borderColor: "grey.400",
           zIndex: 1000,
           justifyContent: "flex-start",
           alignItems: "center",
-          padding: "4px 12px",
+          padding: "2px 12px",
           background: "#ffffff",
         }}
       >

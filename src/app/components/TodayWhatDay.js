@@ -135,7 +135,12 @@ const TodayWhatDay = ({ accessToken }) => {
           priority={true}
         />
       </div>
-      <Container maxWidth={false}>
+      <Container
+        maxWidth={1200}
+        sx={{
+          maxWidth: "1200px",
+        }}
+      >
         <Box
           sx={{
             height: "auto", // 必要に応じて調整 (これはビューポートの高さ)
@@ -151,8 +156,8 @@ const TodayWhatDay = ({ accessToken }) => {
             alignItems="center"
             spacing={1}
             sx={{
-              padding: "0px,12px",
-              gap: "12px",
+              display: "flex",
+              justifyContent: "space-between",
             }}
           >
             <Stack

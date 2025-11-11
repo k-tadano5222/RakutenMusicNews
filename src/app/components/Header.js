@@ -19,12 +19,12 @@ export default function Header() {
   return (
     <Box
       sx={{
-        height: "60px", // ヘッダーの高さ
+        height: "auto", // ヘッダーの高さ
         backgroundColor: "white", // 背景色を設定
         display: "flex",
         alignItems: "center",
         px: "0.8rem",
-        py: "1rem",
+        py: "0.8rem",
         justifyContent: "space-between",
       }}
     >
