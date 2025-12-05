@@ -9,7 +9,7 @@ import Link from "next/link";
 
 export default function Header() {
   const logoStyle = {
-    width: "160px",
+    width: "250px",
     height: "auto",
   };
   const logoMusic = {
@@ -29,7 +29,7 @@ export default function Header() {
       }}
     >
       <Link href="/" passHref style={{ textDecoration: "none", color: "inherit" }}>
-        <Image src="/images/img_logo.png" style={logoStyle} width={154} height={58} alt="logo" />
+        <Image src="/images/img_logo.png" style={logoStyle} width={211} height={34} alt="logo" />
       </Link>
 
       <Image src="/images/img_music.png" style={logoMusic} width={56} height={30} quality={100} alt="logo" />

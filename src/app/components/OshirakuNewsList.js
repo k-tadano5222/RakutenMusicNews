@@ -151,14 +151,14 @@ export default function OshirakuNewsList() {
                 </Stack>
               </Stack>
               <Box sx={{ paddingRight: "12px" }}>
-                <Image src="/images/img_onpu.png" width={50} height={54} quality={100} alt="logo" />
+                <Image src="/images/img_onpu.png" width={50} height={47} quality={100} alt="logo" />
               </Box>
             </Stack>
           </Box>
 
           {/* 説明文 */}
           <Typography py={1} sx={{ fontSize: "14px", textAlign: "center" }}>
-            エンタメ関連のインタビュー記事をご紹介
+            気になるアーティストのコラム/特集記事をご紹介
           </Typography>
 
           {/* APIからエラーが返され、かつ記事が一部でも表示されている場合（例えば推し楽はOKだが静的記事がエラーの場合） */}
@@ -326,7 +326,7 @@ export default function OshirakuNewsList() {
               }}
             >
               <Button variant="outlined" color="error" component={Link} sx={{ width: "100%", backgroundColor: "#ffffff" }} href="/interview-column/all?resetPage=true">
-                インタビュー・コラムをもっと見る＞
+                コラム/特集記事をもっと見る ＞
               </Button>
             </Stack>
           )}

@@ -259,21 +259,6 @@ export default function MusicNewsDetail({ params }) {
               {/* Stack コンポーネント (要素を縦に並べる) */}
               <span dangerouslySetInnerHTML={{ __html: newsItem.news }} /> {/* ニュース記事の本文を表示 (HTML を直接挿入) */}
             </Stack>
-            <Stack direction={"row"} spacing={3}>
-              {/* Stack コンポーネント (要素を横に並べる) */}
-              <p style={{ fontSize: "14px", marginTop: "0" }}>{newsItem.news_genre_name}</p> {/* ニュース記事のジャンルを表示 */}
-              <p style={{ fontSize: "14px", marginTop: "0" }}>{newsItem.media_genre_name}</p> {/* ニュース記事のメディアジャンルを表示 */}
-            </Stack>
-            {/* アーティスト名とアーティストID を表示 */}
-            <p style={{ fontSize: "14px", marginTop: "6px" }}>関連ワード：</p>
-
-            {newsItem.artist &&
-              newsItem.artist.map((artist, index) => (
-                // ニュース記事に関連するアーティスト情報を表示
-                <div style={{ marginTop: "0" }} key={index}>
-                  <p style={{ fontSize: "14px", marginTop: "0" }}>{artist.artist_name}</p> {/* アーティスト名を表示 */}
-                </div>
-              ))}
           </Stack>
         </Card>
         <Box

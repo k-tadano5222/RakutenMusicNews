@@ -159,7 +159,7 @@ export default function MusicNews({ accessToken }) {
                 </Stack>
               </Stack>
               <Box sx={{ paddingRight: "12px" }}>
-                <Image src="/images/img_onpu.png" width={50} height={54} quality={100} alt="logo" />
+                <Image src="/images/img_onpu.png" width={50} height={47} quality={100} alt="logo" />
               </Box>
             </Stack>
           </Box>
