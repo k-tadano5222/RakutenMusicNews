@@ -12,52 +12,38 @@ import * as cheerio from "cheerio";
 import path from "path";
 // ファイルシステム操作のためのNode.js組み込みモジュール (promisified版)
 import { promises as fs } from "fs";
+// 並列処理数を制限するためのライブラリ
+import pLimit from "p-limit";
 
 // --- 設定値 ---
-// 推し楽APIのエンドポイントURL
 const OSHIRAKU_API_ENDPOINT = "https://rdc-api-catalog-gateway-api.rakuten.co.jp/oshiraku/search/v1/article";
-// 静的ニュースのURLリストが記述された設定ファイルのパス
-// process.cwd() はカレントワーキングディレクトリ (プロジェクトのルート) を指す
 const STATIC_NEWS_CONFIG_PATH = path.join(process.cwd(), "config", "staticNewsUrls.json");
-// 推し楽APIにアクセスするためのAPIキー (環境変数から取得)
-// .env.local ファイルなどに OSHIRAKU_API_KEY=YOUR_API_KEY_HERE と記述する必要がある
 const OSHIRAKU_API_KEY = process.env.OSHIRAKU_API_KEY;
 
-// 推し楽APIが一度に取得できる記事の最大件数
 const OSHIRAKU_MAX_PAGE_SIZE = 100;
-// ★追加★ 推し楽APIから取得する記事の最大件数
-// 例えば、最新の300件だけを取得したい場合は 300 に設定します。
-// 0 に設定すると推し楽記事は取得されません。
-const OSHIRAKU_FETCH_LIMIT = 100;
+const OSHIRAKU_FETCH_LIMIT = 300; // 例: 最大300件の記事を取得
 
-// CORS (Cross-Origin Resource Sharing) の許可オリジン設定
-// クライアントのオリジン (例: VercelデプロイURL) を指定することで、セキュリティを確保しつつアクセスを許可する
-// 環境変数 VERCEL_URL があればそれを使用し、なければローカル開発用のURLをフォールバックとして使用
+const SCRAPING_CONCURRENCY_LIMIT = 5; // 例: 同時に5つまでリクエストを送信
+
+// ★MV特集を判別するためのカテゴリキーワード (Metaタグのcontent属性の値と一致させる)★
+// <meta name="category" content="ミュージックビデオ特集"> の content の値
+const MV_CATEGORY_TARGET_VALUE = "ミュージックビデオ特集";
+
 const ALLOWED_ORIGIN = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
 
 // --- キャッシュ関連の変数 ---
-// User-Agentのカテゴリ（'mobile'または'pc'）ごとに記事データをキャッシュするMap
-// Node.jsのプロセスが存続する限り、このデータはメモリ上に保持される
-const cachedArticlesByUA = new Map(); // Map<string (userAgentCategory), { articles: Article[], timestamp: number }>
-// キャッシュの有効期間 (ミリ秒)。ここでは1時間 (60分 * 60秒 * 1000ミリ秒) に設定
+const cachedArticlesByUA = new Map();
 const CACHE_LIFETIME = 60 * 60 * 1000;
 
 // --- ヘルパー関数 ---
 
-/**
- * User-Agent ヘッダーからモバイルデバイスかどうかを判定する関数。
- * @param {string | null | undefined} userAgent - リクエストのUser-Agent文字列。
- * @returns {boolean} モバイルデバイスからのアクセスであれば true、そうでなければ false。
- */
 function isMobileUserAgent(userAgent) {
   if (!userAgent) return false;
-  // 一般的なモバイルデバイスのキーワードを正規表現でチェック
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Mobi/i.test(userAgent);
 }
 
 /**
  * 静的記事のURLからHTMLをフェッチし、解析して記事データを抽出する非同期関数。
- * OGPメタタグ、特定のセレクタ、または本文中の最初の画像からサムネイルURLを試行する。
  * @param {string} pageUrl - スクレイピング対象の静的記事のURL。
  * @returns {Promise<object|null>} 抽出された記事データオブジェクト、またはエラー時にnull。
  */
@@ -95,8 +81,6 @@ async function fetchAndParseStaticNews(pageUrl) {
       if (isNaN(publishDate.getTime())) {
         publishDate = null;
         console.warn(`[fetchAndParseStaticNews] Parsed date is Invalid Date for ${pageUrl}.`);
-      } else {
-        console.log(`[fetchAndParseStaticNews] Parsed publishDate for ${pageUrl}: ${publishDate.toISOString()}`);
       }
     } catch (e) {
       console.warn(`[fetchAndParseStaticNews] Could not parse publishDate '${publishDateStr}' for ${pageUrl}:`, e);
@@ -107,28 +91,34 @@ async function fetchAndParseStaticNews(pageUrl) {
     console.warn(`[fetchAndParseStaticNews] No valid publish date found for ${pageUrl}. Using default (epoch time).`);
   }
 
+  // --- MV特集判定ロジック (Metaタグ content="ミュージックビデオ特集" で判別) ---
+  let isMvFeature = false;
+  // <meta name="category" content="ミュージックビデオ特集"> の content 属性を読み取る
+  const categoryMetaContent = $('meta[name="category"]').attr("content");
+
+  console.log(`[fetchAndParseStaticNews] <meta name="category"> content for ${pageUrl}: '${categoryMetaContent}'`);
+
+  // 読み取った content 属性が MV_CATEGORY_TARGET_VALUE と完全に一致するかをチェック
+  if (categoryMetaContent === MV_CATEGORY_TARGET_VALUE) {
+    isMvFeature = true;
+    console.log(`[fetchAndParseStaticNews] Identified as MV Feature based on <meta name="category"> for ${pageUrl}.`);
+  }
+  console.log(`[fetchAndParseStaticNews] Final isMvFeature for ${pageUrl}: ${isMvFeature}`);
+
   let thumbnailUrl = null;
 
   // --- サムネイル取得ロジック (OGP優先、フォールバックあり) ---
-
-  // 1. OGP メタタグからサムネイルURLを抽出 (最優先)
   const ogImage = $('meta[property="og:image"]').attr("content");
-  console.log(`[fetchAndParseStaticNews] OGP og:image raw content for ${pageUrl}: '${ogImage}'`);
   if (ogImage) {
     try {
       thumbnailUrl = new URL(ogImage, pageUrl).href;
-      console.log(`[fetchAndParseStaticNews] Found OGP image for ${pageUrl}: ${thumbnailUrl}`);
     } catch (ogUrlResolveError) {
       console.warn(`[fetchAndParseStaticNews] Could not resolve OGP image URL ${ogImage} for ${pageUrl}:`, ogUrlResolveError.message);
-      thumbnailUrl = null;
     }
   }
 
-  // 2. OGP画像が見つからない場合、特定のセレクタから抽出 (フォールバック1)
   if (!thumbnailUrl) {
     const imgTag = $("figure.biography__image img").first();
-    const specificImgSrc = imgTag.length > 0 ? imgTag.attr("src") : "N/A";
-    console.log(`[fetchAndParseStaticNews] Specific selector (figure.biography__image img) src for ${pageUrl}: '${specificImgSrc}'`);
     if (imgTag.length > 0) {
       const src = imgTag.attr("src");
       if (src) {
@@ -138,20 +128,15 @@ async function fetchAndParseStaticNews(pageUrl) {
             effectiveSrc = `https:${src}`;
           }
           thumbnailUrl = new URL(effectiveSrc, pageUrl).href;
-          console.log(`[fetchAndParseStaticNews] Found specific image for ${pageUrl}: ${thumbnailUrl}`);
         } catch (urlResolveError) {
           console.warn(`[fetchAndParseStaticNews] Could not resolve specific image URL ${src} for ${pageUrl}:`, urlResolveError.message);
-          thumbnailUrl = null;
         }
       }
     }
   }
 
-  // 3. それでも見つからない場合、本文中の最初の画像を探す (最終フォールバック)
   if (!thumbnailUrl) {
     const firstImg = $("img").first();
-    const firstImgSrc = firstImg.length > 0 ? firstImg.attr("src") : "N/A";
-    console.log(`[fetchAndParseStaticNews] First img tag src for ${pageUrl}: '${firstImgSrc}'`);
     if (firstImg.length > 0) {
       const src = firstImg.attr("src");
       if (src) {
@@ -161,10 +146,8 @@ async function fetchAndParseStaticNews(pageUrl) {
             effectiveSrc = `https:${src}`;
           }
           thumbnailUrl = new URL(effectiveSrc, pageUrl).href;
-          console.log(`[fetchAndParseStaticNews] Found first img tag for ${pageUrl}: ${thumbnailUrl}`);
         } catch (firstImgResolveError) {
           console.warn(`[fetchAndParseStaticNews] Could not resolve first img tag URL ${src} for ${pageUrl}:`, firstImgResolveError.message);
-          thumbnailUrl = null;
         }
       }
     }
@@ -177,15 +160,6 @@ async function fetchAndParseStaticNews(pageUrl) {
   const sortDate = publishDate || new Date(0);
   const displayDate = publishDate ? publishDate.toLocaleDateString("ja-JP", { year: "numeric", month: "numeric", day: "numeric" }) : "日付不明";
 
-  console.log(`[fetchAndParseStaticNews] Final article data for ${pageUrl}:`, {
-    id: id,
-    title: title,
-    url: pageUrl,
-    thumbnailImage: thumbnailUrl,
-    sortDate: sortDate.toISOString(),
-    displayDate: displayDate,
-  });
-
   return {
     id: id,
     type: "static",
@@ -195,14 +169,12 @@ async function fetchAndParseStaticNews(pageUrl) {
     thumbnailImage: thumbnailUrl ? { url: thumbnailUrl } : null,
     sortDate: sortDate,
     displayDate: displayDate,
+    isMvFeature: isMvFeature, // ★MV特集フラグを追加★
   };
 }
 
 /**
  * GET リクエストハンドラ。
- * インタビュー・コラム記事を統合し、ページネーションされたデータを返す。
- * @param {Request} request - Next.js の Request オブジェクト。
- * @returns {NextResponse} 記事データ、総件数、エラー情報を含むJSONレスポンス。
  */
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -219,9 +191,8 @@ export async function GET(request) {
 
   const now = Date.now();
   const userAgent = request.headers.get("user-agent");
-  const userAgentCategory = isMobileUserAgent(userAgent) ? "mobile" : "pc"; // 'mobile' or 'pc'
+  const userAgentCategory = isMobileUserAgent(userAgent) ? "mobile" : "pc";
 
-  // 💡 キャッシュのチェックと利用 (User-Agentごとのキャッシュ)
   const cachedData = cachedArticlesByUA.get(userAgentCategory);
 
   if (cachedData && now - cachedData.timestamp < CACHE_LIFETIME) {
@@ -230,35 +201,31 @@ export async function GET(request) {
   } else {
     console.log(`[interview-column API] Cache expired or not found for ${userAgentCategory}. Fetching new data...`);
 
-    // 1. 推し楽記事の取得 (全件取得)
+    // 1. 推し楽記事の取得
     try {
       let currentOshirakuPage = 1;
       let hasMoreOshiraku = true;
       let tempOshirakuArticles = [];
-      let totalFetchedOshiraku = 0; // ★追加★ 取得済みの推し楽記事総数
+      let totalFetchedOshiraku = 0;
 
-      // 記事がなくなるまで、または取得制限に達するまでループ
       while (hasMoreOshiraku && totalFetchedOshiraku < OSHIRAKU_FETCH_LIMIT) {
-        // ★修正★
-        // 1回のAPI呼び出しで取得する件数
-        // 残りの取得制限数を考慮して pageSize を調整
         const currentFetchSize = Math.min(OSHIRAKU_MAX_PAGE_SIZE, OSHIRAKU_FETCH_LIMIT - totalFetchedOshiraku);
 
-        // currentFetchSize が 0 以下なら、もう取得する必要がない
         if (currentFetchSize <= 0) {
           hasMoreOshiraku = false;
           break;
         }
+
         const oshirakuRes = await axios.get(OSHIRAKU_API_ENDPOINT, {
           headers: {
             apikey: OSHIRAKU_API_KEY,
           },
           params: {
-            oshTagId: 3,
+            oshTagId: 1,
             page: currentOshirakuPage,
             pageSize: currentFetchSize,
             sortType: "opendate",
-            label: "feature,report,interview,exclusive",
+            label: "report,interview,exclusive,public_relations",
           },
         });
 
@@ -266,32 +233,29 @@ export async function GET(request) {
           ...article,
           id: article.articleId,
           type: "oshiraku",
-          thumbnailImage: article.thumbnailImage || null, // 推し楽APIのレスポンスから直接使用
+          thumbnailImage: article.thumbnailImage || null,
           sortDate: article.openDate ? new Date(article.openDate) : new Date(0),
           displayDate: article.openDate ? new Date(article.openDate).toLocaleDateString("ja-JP", { year: "numeric", month: "numeric", day: "numeric" }) : "日付不明",
+          isMvFeature: false, // 推し楽記事にはMV特集フラグをデフォルトでfalseにする
         }));
 
         tempOshirakuArticles = tempOshirakuArticles.concat(fetchedArticles);
-        totalFetchedOshiraku += fetchedArticles.length; // ★追加★ 取得総数を更新
+        totalFetchedOshiraku += fetchedArticles.length;
 
-        // 取得した記事数がリクエストした pageSize より少なければ、もう次のページはない
-        // または、取得総数が制限に達していればループを終了
         if (fetchedArticles.length < currentFetchSize || totalFetchedOshiraku >= OSHIRAKU_FETCH_LIMIT) {
-          // ★修正★
           hasMoreOshiraku = false;
         } else {
           currentOshirakuPage++;
         }
       }
-      // 最終的に取得制限を超えてしまった場合のために切り詰める
-      allCombinedArticles = allCombinedArticles.concat(tempOshirakuArticles.slice(0, OSHIRAKU_FETCH_LIMIT)); // ★修正★
+      allCombinedArticles = allCombinedArticles.concat(tempOshirakuArticles.slice(0, OSHIRAKU_FETCH_LIMIT));
       console.log(`[interview-column API] Fetched ${allCombinedArticles.filter((a) => a.type === "oshiraku").length} Oshiraku articles (up to limit).`);
     } catch (err) {
       console.error("Failed to fetch Oshiraku articles:", err.message);
       oshirakuFetchError = "推し楽ニュースの取得に失敗しました。";
     }
 
-    // 2. 静的記事の取得 (全件スクレイピング)
+    // 2. 静的記事の取得
     let EXTERNAL_STATIC_PAGE_URLS = [];
 
     try {
@@ -304,7 +268,6 @@ export async function GET(request) {
         EXTERNAL_STATIC_PAGE_URLS = staticUrlsConfig.mobileUrls || [];
         console.log(`[interview-column API] Using mobileUrls: ${EXTERNAL_STATIC_PAGE_URLS.length} URLs.`);
       } else {
-        // 'pc'
         EXTERNAL_STATIC_PAGE_URLS = staticUrlsConfig.pcUrls || [];
         console.log(`[interview-column API] Using pcUrls: ${EXTERNAL_STATIC_PAGE_URLS.length} URLs.`);
       }
@@ -315,7 +278,8 @@ export async function GET(request) {
 
     if (EXTERNAL_STATIC_PAGE_URLS.length > 0) {
       try {
-        const staticArticles = await Promise.all(EXTERNAL_STATIC_PAGE_URLS.map((url) => fetchAndParseStaticNews(url)));
+        const limit = pLimit(SCRAPING_CONCURRENCY_LIMIT);
+        const staticArticles = await Promise.all(EXTERNAL_STATIC_PAGE_URLS.map((url) => limit(() => fetchAndParseStaticNews(url))));
         allCombinedArticles = allCombinedArticles.concat(staticArticles.filter((item) => item !== null));
         console.log(`[interview-column API] Fetched ${staticArticles.filter((a) => a !== null).length} static articles.`);
       } catch (err) {
@@ -332,7 +296,7 @@ export async function GET(request) {
     });
     console.log(`[interview-column API] Total articles after sort: ${allCombinedArticles.length}`);
 
-    // 💡 キャッシュに保存
+    // キャッシュに保存
     cachedArticlesByUA.set(userAgentCategory, { articles: allCombinedArticles, timestamp: now });
     console.log(`[interview-column API] Cached data for ${userAgentCategory}.`);
   }
@@ -367,7 +331,6 @@ export async function GET(request) {
 
 /**
  * OPTIONS リクエストハンドラ (CORSプリフライトリクエスト対応)。
- * @returns {NextResponse} CORSヘッダーを含む空のレスポンス。
  */
 export async function OPTIONS() {
   return new NextResponse(null, {

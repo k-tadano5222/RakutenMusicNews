@@ -4,7 +4,7 @@
 
 import TitleImage from "./parts/TitleImage.js";
 import React, { useEffect, useState } from "react";
-// import axios from "axios"; // axios は不要になるのでコメントアウトまたは削除
+// import axios from "axios"; // axios は不要なのでコメントアウトまたは削除
 import Link from "next/link"; // Next.js の Link コンポーネントをインポート
 
 import {
@@ -14,7 +14,7 @@ import {
   Typography,
   CardMedia,
   Stack,
-  Chip,
+  Chip, // Chip コンポーネントをインポート済み
   List,
   ListItem,
   ListItemText,
@@ -44,6 +44,7 @@ export default function OshirakuNewsList() {
 
       try {
         // 新しい統合APIを呼び出す
+        // accessToken が必要であれば、ここに渡すロジックを追加
         const response = await fetch(`/api/interview-column?page=1&pageSize=${DISPLAY_LIMIT}`);
 
         if (!response.ok) {
@@ -109,7 +110,6 @@ export default function OshirakuNewsList() {
               height: `10px`, // 親要素の高さを固定
               position: "relative", // layout="fill" (または fill={true}) には必須
               overflow: "hidden", // 画像が親要素からはみ出るのを防ぐ
-              // border: '1px solid green', // 動作確認用の枠線
             }}
           >
             <Image
@@ -175,19 +175,13 @@ export default function OshirakuNewsList() {
           )}
 
           {/* リスト表示部分 */}
-
           <List
             sx={{
               padding: "0",
             }}
           >
             {articles.map((article) => (
-              <React.Fragment
-                key={article.id}
-                sx={{
-                  padding: "0",
-                }}
-              >
+              <React.Fragment key={article.id}>
                 <ListItem
                   alignItems="flex-start"
                   sx={{
@@ -196,8 +190,10 @@ export default function OshirakuNewsList() {
                   }}
                 >
                   <ListItemButton
-                    component={Link}
+                    component="a"
                     href={article.url}
+                    target="_self"
+                    rel="noopener noreferrer"
                     sx={{
                       display: "flex",
                       alignItems: "center",
@@ -230,79 +226,93 @@ export default function OshirakuNewsList() {
                           sx={{
                             display: "flex",
                             alignItems: "center",
-                            justifyContent: "space-between",
+                            justifyContent: "start",
                             width: "100%",
                             paddingLeft: "6px",
+                            gap: 1,
                           }}
                         >
                           <Typography sx={{ fontSize: "10px" }} component="span" variant="body2" color="text.primary">
                             {article.displayDate}
                           </Typography>
+                          {/* 既存のタイプ別バッジ */}
+                          {article.type === "oshiraku" && (
+                            <Chip
+                              label="推し楽"
+                              size="small"
+                              sx={{
+                                fontSize: "10px",
+                                height: "18px",
+                                lineHeight: "18px",
+                                "& .MuiChip-label": {
+                                  padding: "0 8px",
+                                  color: "#232c47",
+                                },
+                                backgroundColor: "#b898bc",
+                                mr: 1, // バッジ間のマージン
+                              }}
+                            />
+                          )}
+                          {article.type === "static" && (
+                            <Chip
+                              label="楽天ミュージック"
+                              size="small"
+                              sx={{
+                                fontSize: "10px",
+                                height: "18px",
+                                lineHeight: "18px",
+                                "& .MuiChip-label": {
+                                  padding: "0 8px",
+                                  color: "#ffffff",
+                                },
+                                backgroundColor: "#bf0000",
+                              }}
+                            />
+                          )}
+                          {/* ★MVバッジ★ */}
+                          {article.isMvFeature && (
+                            <Chip
+                              label="MV"
+                              size="small"
+                              color="primary"
+                              sx={{
+                                fontSize: "10px",
+                                height: "18px",
+                                lineHeight: "18px",
+                                "& .MuiChip-label": {
+                                  padding: "0 8px",
+                                },
+                              }}
+                            />
+                          )}
                         </Box>
                       }
                       secondary={
                         <React.Fragment>
-                          <Typography
-                            variant="subtitle1"
-                            style={{ fontSize: "16px", fontWeight: "normal" }}
-                            sx={{
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              display: "-webkit-box",
-                              WebkitLineClamp: "2",
-                              WebkitBoxOrient: "vertical",
-                              wordBreak: "break-all",
-                              paddingLeft: "6px",
-                            }}
-                          >
-                            {article.title}
-                          </Typography>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              width: "100%",
-                              paddingLeft: "6px",
-                            }}
-                          >
-                            {/* バッジ */}
-                            {article.type === "oshiraku" && (
-                              <Chip
-                                label="推し楽"
-                                size="small"
-                                sx={{
-                                  fontSize: "10px",
-                                  height: "18px",
-                                  lineHeight: "18px",
-                                  "& .MuiChip-label": {
-                                    padding: "0 8px",
-                                    color: "#232c47",
-                                  },
-                                  backgroundColor: "#b898bc",
-                                }}
-                              />
-                            )}
-                            {article.type === "static" && (
-                              <Chip
-                                label="楽天ミュージック"
-                                size="small"
-                                sx={{
-                                  fontSize: "10px",
-                                  height: "18px",
-                                  lineHeight: "18px",
-                                  "& .MuiChip-label": {
-                                    padding: "0 8px",
-                                    color: "#ffffff",
-                                  },
-                                  backgroundColor: "#bf0000",
-                                }}
-                              />
-                            )}
+                          {/* タイトルと既存のタイプ別バッジの表示 */}
+                          <Box sx={{ display: "flex", alignItems: "center", paddingLeft: "6px" }}>
+                            <Typography
+                              variant="subtitle1"
+                              style={{ fontSize: "16px", fontWeight: "normal" }}
+                              sx={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                display: "-webkit-box",
+                                WebkitLineClamp: "2",
+                                WebkitBoxOrient: "vertical",
+                                wordBreak: "break-all",
+                                mr: 1, // タイトルとバッジの間にマージン
+                              }}
+                            >
+                              {article.title}
+                            </Typography>
                           </Box>
                         </React.Fragment>
                       }
                     />
+
                     {/* 右側のアイコン (矢印) */}
-                    <ListItemIcon sx={{ minWidth: "auto", pr: 1 }}>
+                    <ListItemIcon sx={{ minWidth: "auto", pl: 1 }}>
                       <ArrowForwardIosIcon style={{ fontSize: "16px" }} />
                     </ListItemIcon>
                   </ListItemButton>
